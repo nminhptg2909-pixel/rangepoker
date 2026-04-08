@@ -25,8 +25,8 @@
 
         /* Range Matrix */
         #matrix { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; }
-        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; background-color: #444; cursor: pointer; user-select: none; border-radius: 3px; transition: 0.1s;}
-        .cell:hover { opacity: 0.8; box-shadow: inset 0 0 0 2px #fff;}
+        /* Đã xóa cursor: pointer và hiệu ứng hover để cố định bảng */
+        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; background-color: #444; user-select: none; border-radius: 3px; transition: 0.1s;}
         .pair { border: 1px solid #888; }
         
         /* State Colors */
@@ -78,7 +78,6 @@
         <div class="range-controls">
             <label for="positionSelect">Chọn vị trí (Bàn 8-Max Đầy Đủ):</label>
             <select id="positionSelect">
-                <option value="custom">-- Bảng tự thiết kế của bạn (Custom) --</option>
                 <option value="utg">1. UTG (Đầu bàn - Không Limp)</option>
                 <option value="utg1">2. UTG+1 (Không Limp)</option>
                 <option value="mp">3. MP / LoJack (Bắt đầu Over-Limp)</option>
@@ -88,7 +87,7 @@
                 <option value="sb">7. SB (Small Blind - Complete vs Limpers)</option>
                 <option value="bb">8. BB (Big Blind - Defense vs Raise)</option>
             </select>
-            <div id="range-info" class="info-box">Tự do click vào các ô bài bên dưới để tạo Range của riêng bạn. Hệ thống sẽ tự lưu lại.</div>
+            <div id="range-info" class="info-box">Bảng tra cứu Range bài. Đã khóa tính năng click để tránh chạm nhầm.</div>
         </div>
 
         <div id="matrix"></div>
@@ -165,7 +164,7 @@
 </div>
 
 <script>
-    // --- Database: Chuyên gia TAG Ranges (Bổ sung Limp) ---
+    // --- Database: Chuyên gia TAG Ranges ---
     const tagRanges = {
         'utg': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','A9s','A5s','KQs','KJs','KTs','QJs','QTs','JTs','T9s','AKo','AQo','AJo','KQo'],
@@ -226,10 +225,8 @@
     // --- Range Matrix Setup ---
     const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     const matrixEl = document.getElementById('matrix');
-    let customRange = JSON.parse(localStorage.getItem('customPokerRange')) || Array(169).fill(3); 
 
-    // Build DOM Matrix
-    let cellIndex = 0;
+    // Build DOM Matrix (Đã loại bỏ hoàn toàn tính năng Click)
     for (let i = 0; i < 13; i++) {
         for (let j = 0; j < 13; j++) {
             let hand = '';
@@ -244,51 +241,22 @@
             }
 
             const cell = document.createElement('div');
-            cell.className = `cell state-3 ${extraClass}`; 
+            cell.className = `cell state-3 ${extraClass}`; // Mặc định là Fold
             cell.dataset.state = 3;
             cell.dataset.hand = hand;
-            cell.dataset.index = cellIndex;
             cell.textContent = hand;
             
-            // Handle User Clicks (Cycle: 3(Fold)->4(Limp)->1(Raise)->2(Call)->3(Fold))
-            cell.addEventListener('click', function() {
-                document.getElementById('positionSelect').value = 'custom';
-                document.getElementById('range-info').innerHTML = "Bảng tự thiết kế của bạn (Custom). Click để đổi màu: Fold ➡️ Limp ➡️ Raise ➡️ Call";
-                
-                let state = parseInt(this.dataset.state);
-                let newState = state === 3 ? 4 : (state === 4 ? 1 : (state === 1 ? 2 : 3));
-                
-                this.dataset.state = newState;
-                this.className = `cell state-${newState} ${extraClass}`;
-                
-                const cells = document.querySelectorAll('.cell');
-                customRange = Array.from(cells).map(c => parseInt(c.dataset.state));
-                localStorage.setItem('customPokerRange', JSON.stringify(customRange));
-            });
-
             matrixEl.appendChild(cell);
-            cellIndex++;
         }
     }
 
     // Load Ranges Dropdown Logic
     document.getElementById('positionSelect').addEventListener('change', function() {
         const val = this.value;
-        const cells = document.querySelectorAll('.cell');
-        
-        if (val === 'custom') {
-            document.getElementById('range-info').innerHTML = "Bảng tự thiết kế của bạn (Custom). Click để đổi màu: Fold ➡️ Limp ➡️ Raise ➡️ Call";
-            cells.forEach((cell, idx) => {
-                let state = customRange[idx] || 3;
-                cell.dataset.state = state;
-                cell.className = `cell state-${state} ${cell.classList.contains('pair')?'pair':''}`;
-            });
-            return;
-        }
-
         const data = tagRanges[val];
         document.getElementById('range-info').innerHTML = data.info;
 
+        const cells = document.querySelectorAll('.cell');
         cells.forEach(cell => {
             const hand = cell.dataset.hand;
             let newState = 3; // Fold by default
@@ -302,6 +270,7 @@
         });
     });
 
+    // Kích hoạt hiển thị mặc định bảng UTG khi vừa vào web
     document.getElementById('positionSelect').dispatchEvent(new Event('change'));
 
     // --- Tab 2 & 3 Logic ---
