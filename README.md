@@ -7,11 +7,11 @@
     <style>
         body { font-family: Arial, sans-serif; background-color: #1e1e1e; color: #fff; margin: 0; padding: 20px; }
         .container { max-width: 800px; margin: auto; background: #2d2d2d; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
-        h1 { text-align: center; color: #f39c12; font-size: 24px; }
+        h1 { text-align: center; color: #f39c12; font-size: 24px; margin-bottom: 10px; }
         
         /* Tabs */
         .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #444; flex-wrap: wrap; }
-        .tab { padding: 10px 15px; cursor: pointer; font-weight: bold; color: #ccc; font-size: 15px; }
+        .tab { padding: 10px 15px; cursor: pointer; font-weight: bold; color: #ccc; font-size: 15px; transition: 0.2s;}
         .tab:hover { color: #fff; }
         .tab.active { color: #f39c12; border-bottom: 2px solid #f39c12; margin-bottom: -2px; }
         
@@ -20,20 +20,33 @@
 
         /* Range Matrix Controls */
         .range-controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; background: #333; padding: 15px; border-radius: 5px; border: 1px solid #555;}
-        select { padding: 10px; border: 1px solid #555; border-radius: 4px; background-color: #222; color: white; font-size: 16px; font-weight: bold;}
+        select { padding: 10px; border: 1px solid #555; border-radius: 4px; background-color: #222; color: white; font-size: 16px; font-weight: bold; cursor: pointer;}
         .info-box { font-size: 14px; color: #3498db; line-height: 1.5; }
 
         /* Range Matrix */
         #matrix { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; }
-        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; background-color: #444; user-select: none; border-radius: 3px; transition: 0.1s;}
+        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; background-color: #444; user-select: none; border-radius: 3px; transition: 0.2s;}
         .pair { border: 1px solid #888; }
         
         /* State Colors */
         .state-0 { background-color: #444; } /* Empty/Default */
         .state-1 { background-color: #e74c3c; color: white;} /* Raise/3-Bet (Red) */
         .state-2 { background-color: #2ecc71; color: black; } /* Call vs Raise (Green) */
-        .state-3 { background-color: #7f8c8d; color: white; opacity: 0.4; } /* Fold (Grey) */
+        .state-3 { background-color: #7f8c8d; color: white; opacity: 0.3; } /* Fold (Grey) */
         .state-4 { background-color: #3498db; color: white; } /* Limp / Over-limp (Blue) */
+
+        /* Legend */
+        .legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; font-size: 14px; }
+        .legend span { padding: 5px 10px; border-radius: 3px; font-weight: bold; }
+
+        /* Cheat Sheet Section */
+        .cheat-sheet { margin-top: 25px; background: #2c3e50; padding: 15px 20px; border-radius: 6px; border-left: 5px solid #f39c12; font-size: 14px; line-height: 1.6;}
+        .cheat-sheet h3 { margin-top: 0; color: #f1c40f; font-size: 18px; border-bottom: 1px solid #555; padding-bottom: 5px;}
+        .cheat-sheet h4 { color: #ecf0f1; margin: 10px 0 5px 0; }
+        .cheat-sheet ul { margin: 0; padding-left: 20px; }
+        .cheat-sheet li { margin-bottom: 5px; color: #bdc3c7;}
+        .text-highlight { color: #e74c3c; font-weight: bold; }
+        .text-blue { color: #3498db; font-weight: bold; }
 
         /* Form Controls */
         .form-group { display: flex; flex-direction: column; gap: 15px; max-width: 450px; margin: auto; }
@@ -55,9 +68,6 @@
         .highlight-green { color: #2ecc71; font-weight: bold;}
         .highlight-red { color: #e74c3c; font-weight: bold;}
         .highlight-yellow { color: #f1c40f; font-weight: bold;}
-        
-        .legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; font-size: 14px; }
-        .legend span { padding: 5px 10px; border-radius: 3px; font-weight: bold; }
         
         .divider { height: 1px; background-color: #555; margin: 20px 0; }
     </style>
@@ -97,6 +107,29 @@
             <span style="background-color: #2ecc71; color: black;">Call (vs Raise)</span>
             <span style="background-color: #3498db; color: white;">Limp / Over-limp</span>
             <span style="background-color: #7f8c8d; opacity: 0.8;">Fold</span>
+        </div>
+
+        <div class="cheat-sheet">
+            <h3>⚡ Bí Kíp Thực Chiến 9-Max (Max Profit)</h3>
+            
+            <h4>1. Trừng phạt kẻ Limp (Iso-Raise)</h4>
+            <ul>
+                <li>Nếu có người Limp, đừng Limp theo nếu bạn có bài mạnh (AQ+, TT+). Hãy Raise để cách ly.</li>
+                <li>Công thức Size: <span class="text-highlight">3 BB + 1 BB</span> (cho mỗi người Limp) <span class="text-highlight">+ 1 BB</span> (nếu bạn OOP).</li>
+            </ul>
+
+            <h4>2. Đào mỏ Sám Cô (Set Mining)</h4>
+            <ul>
+                <li>Dùng đôi nhỏ (22-99) để bẫy khi có nhiều người vào Pot (Family pot).</li>
+                <li><span class="text-blue">Quy tắc 15x:</span> Chỉ Call khi Stack của bạn và đối thủ lớn hơn gấp 15 lần số tiền bạn phải Call (để đảm bảo Implied Odds). Trượt Flop = Bỏ ngay.</li>
+            </ul>
+
+            <h4>3. Sinh tồn khi OOP (Bất Lợi Vị Trí - SB, BB, UTG)</h4>
+            <ul>
+                <li><span class="text-highlight">Nguyên tắc 3-Bet or Fold ở SB:</span> Ở SB, đừng Call ngang cú Raise. Bạn sẽ bị BB kẹp thịt và phải đánh OOP cả ván. Hãy 3-Bet mạnh tay hoặc Fold.</li>
+                <li><span class="text-blue">Đừng yêu Top Pair yếu:</span> Nếu cầm KQ, QJ trúng 1 đôi ở Flop nhưng bạn phải check trước, hãy kiểm soát Pot (Check/Call) thay vì Bet lớn để tránh bị Value đè.</li>
+                <li>Thắt chặt Range (Tighten Up): Nếu ngồi đầu bàn, phải bỏ hoàn toàn các bài dễ bị chi phối như ATo, KJo vì bạn không có thông tin từ 8 người ngồi sau.</li>
+            </ul>
         </div>
     </div>
 
@@ -166,52 +199,52 @@
 <script>
     // --- Database: Chuyên gia TAG Ranges (9-MAX FULL RING) ---
     const tagRanges = {
-        'utg': { // Vị trí 1
+        'utg': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','AKs','AQs','AJs','ATs','KQs','AKo','AQo'],
             call: [], limp: [],
-            info: "🔥 <b>Chiến lược UTG (Siêu Tight):</b> Có 8 người ngồi sau. Bạn ĐẶC BIỆT dễ chết nếu cầm lá Át yếu hoặc bài Connector. Chỉ Open Raise Top 8% siêu xịn."
+            info: "🔥 <b>Chiến lược UTG (Siêu Tight):</b> Có 8 người ngồi sau. Bạn ĐẶC BIỆT dễ chết nếu cầm lá Át yếu. Chỉ Open Raise Top 8% siêu xịn."
         },
-        'utg1': { // Vị trí 2
+        'utg1': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','A9s','A5s','KQs','KJs','AKo','AQo','AJo','KQo'],
             call: [], limp: [],
             info: "🔥 <b>Chiến lược UTG+1:</b> Vẫn là Early Position. Bắt đầu đánh thêm đôi 77 và một số Broadways mạnh. Không Limp."
         },
-        'utg2': { // Vị trí 3
+        'utg2': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A5s','A4s','KQs','KJs','KTs','QJs','QTs','JTs','T9s','AKo','AQo','AJo','ATo','KQo','KJo'],
             call: [], limp: [],
             info: "🔥 <b>Chiến lược UTG+2:</b> Chuẩn bị vào giữa bàn. Thêm các bài Suited Connectors to (T9s, JTs) và các đôi nhỏ để Set Mining."
         },
-        'mp': { // Vị trí 4
+        'mp': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A5s','A4s','KQs','KJs','KTs','K9s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','AKo','AQo','AJo','ATo','KQo','KJo'],
             call: [], 
             limp: ['44','33','22','87s','76s','65s','54s'],
             info: "🔥 <b>Chiến lược MP (LoJack):</b> <span style='color:#3498db'>Vùng Limp mở khóa:</span> Nếu có 1-2 người Limp trước đó, hãy Over-Limp các đôi nhỏ lẻ hoặc bài đồng chất dây để bẫy sập đối thủ."
         },
-        'hj': { // Vị trí 5
+        'hj': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','QJs','QTs','Q9s','Q8s','JTs','J9s','J8s','T9s','T8s','98s','87s','76s','65s','AKo','AQo','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo'],
             call: [], 
             limp: ['54s','64s','75s','86s'],
             info: "🔥 <b>Chiến lược HJ (Hijack):</b> Nếu trước bạn chưa ai Raise, hãy nã đạn để cướp pot. <span style='color:#3498db'>Limp:</span> Khi cả bàn đánh hiền."
         },
-        'co': { // Vị trí 6
+        'co': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A5o','KQo','KJo','KTo','K9o','QJo','QTo','Q9o','JTo','J9o','T9o'],
             call: [], 
             limp: ['64s','75s','86s','97s','T8s','J8s','Q8s'],
             info: "🔥 <b>Chiến lược CO (Cutoff):</b> Cực mạnh để Steal. Chỉ còn BTN và Blind phía sau. Ép họ Fold bằng cách mở Raise cực rộng (30-35%)."
         },
-        'btn': { // Vị trí 7
+        'btn': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','Q4s','Q3s','Q2s','JTs','J9s','J8s','J7s','J6s','J5s','T9s','T8s','T7s','T6s','98s','97s','96s','87s','86s','76s','75s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A6o','A5o','A4o','A3o','A2o','KQo','KJo','KTo','K9o','K8o','QJo','QTo','Q9o','Q8o','JTo','J9o','T9o','98o'],
             call: [], 
             limp: [],
             info: "🔥 <b>Chiến lược BTN (Button):</b> Range Raise phủ nửa bảng. Hãy trừng phạt tất cả những kẻ Limp ở trước bằng cú Raise to, hoặc Steal tiền mù."
         },
-        'sb': { // Vị trí 8
+        'sb': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','A9s','KQs','KJs','KTs','QJs','QTs','JTs','AKo','AQo','AJo','ATo','KQo'],
             call: [], 
             limp: ['66','55','44','33','22','A8s','A7s','A6s','A5s','A4s','A3s','A2s','K9s','K8s','K7s','K6s','K5s','K4s','Q9s','Q8s','Q7s','J9s','J8s','T9s','T8s','98s','87s','76s','65s','54s','A9o','A8o','A7o','A5o','KJo','KTo','QJo','QTo','JTo','T9o'],
             info: "🔥 <b>Chiến lược SB:</b> <span style='color:#3498db'>Vùng Complete:</span> Nếu có 2-3 người Limp, hãy bỏ thêm 0.5 BB vào xem cho vui. Nhưng tuyệt đối ĐỪNG LIMP khi là First-in."
         },
-        'bb': { // Vị trí 9
+        'bb': {
             raise: ['AA','KK','QQ','JJ','TT','AKs','AQs','AJs','AKo','AQo','A5s','A4s'], 
             call: ['99','88','77','66','55','44','33','22','ATs','A9s','A8s','A7s','A6s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','Q4s','Q3s','Q2s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','75s','65s','64s','54s','53s','43s','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo','T9o'],
             limp: [],
@@ -231,7 +264,6 @@
     const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     const matrixEl = document.getElementById('matrix');
 
-    // Build DOM Matrix
     for (let i = 0; i < 13; i++) {
         for (let j = 0; j < 13; j++) {
             let hand = '';
@@ -250,12 +282,10 @@
             cell.dataset.state = 3;
             cell.dataset.hand = hand;
             cell.textContent = hand;
-            
             matrixEl.appendChild(cell);
         }
     }
 
-    // Load Ranges Dropdown Logic
     document.getElementById('positionSelect').addEventListener('change', function() {
         const val = this.value;
         const data = tagRanges[val];
@@ -264,11 +294,10 @@
         const cells = document.querySelectorAll('.cell');
         cells.forEach(cell => {
             const hand = cell.dataset.hand;
-            let newState = 3; // Fold by default
-            
+            let newState = 3; // Fold
             if (data.raise && data.raise.includes(hand)) newState = 1; 
             else if (data.call && data.call.includes(hand)) newState = 2; 
-            else if (data.limp && data.limp.includes(hand)) newState = 4; // LIMP STATE
+            else if (data.limp && data.limp.includes(hand)) newState = 4;
             
             cell.dataset.state = newState;
             cell.className = `cell state-${newState} ${cell.classList.contains('pair')?'pair':''}`;
