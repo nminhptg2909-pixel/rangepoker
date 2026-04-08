@@ -81,8 +81,9 @@
                 <option value="utg">1. UTG (Đầu bàn - Chơi cực chặt)</option>
                 <option value="mp">2. MP (Giữa bàn - Bắt đầu mở rộng)</option>
                 <option value="co">3. CO (Cutoff - Kề cuối, cướp chip mạnh)</option>
-                <option value="btn">4. BTN (Button - Cướp mù rộng nhất)</option>
-                <option value="bb_vs_btn">5. BB Defense (Bảo vệ mù vs BTN)</option>
+                <option value="btn">4. BTN (Button - Vua cướp mù)</option>
+                <option value="sb">5. SB (Small Blind - Cướp mù BB hoặc Fold)</option>
+                <option value="bb">6. BB (Big Blind - Phòng thủ chung rộng rãi)</option>
             </select>
             <div id="range-info" class="info-box">Tự do click vào các ô bài bên dưới để tạo Range của riêng bạn. Hệ thống sẽ tự lưu lại.</div>
         </div>
@@ -160,32 +161,37 @@
 </div>
 
 <script>
-    // --- Database: Chuyên gia TAG Ranges (8-Max Focus) ---
+    // --- Database: Chuyên gia TAG Ranges (8-Max Focus, Tối ưu SB/BB) ---
     const tagRanges = {
         'utg': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','A9s','A5s','KQs','KJs','KTs','QJs','QTs','JTs','T9s','AKo','AQo','AJo','KQo'],
             call: [],
-            info: "🔥 <b>Chiến lược UTG (Early):</b> Rất dễ bị ép sân sau Flop. Chỉ Open Raise với top 12% bài mạnh nhất. Bỏ hoàn toàn các lá Ax yếu hoặc bài Suit Connectors nhỏ.<br>👉 <b>Hành động:</b> Raise 2.5x - 3x BB. Bị 3-Bet thì Fold nếu không cầm AA, KK, QQ, AK."
+            info: "🔥 <b>Chiến lược UTG (Early):</b> Rất dễ bị ép sân sau Flop. Chỉ Open Raise với top 12% bài mạnh nhất. Bỏ hoàn toàn các lá Ax yếu.<br>👉 <b>Hành động:</b> Raise 2.5x - 3x BB. Bị 3-Bet thì Fold nếu không cầm AA, KK, QQ, AK."
         },
         'mp': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A5s','A4s','KQs','KJs','KTs','K9s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','87s','AKo','AQo','AJo','ATo','KQo','KJo'],
             call: [],
-            info: "🔥 <b>Chiến lược MP (Middle):</b> Vị trí trung bình. Bắt đầu mở rộng đánh các đôi nhỏ (55, 66) và các bài Suit Connectors (87s, 98s) để bẫy đối thủ.<br>👉 <b>Hành động:</b> Raise 2.5x BB. Hạn chế Call hờ, hãy là người nổ súng đầu tiên."
+            info: "🔥 <b>Chiến lược MP (Middle):</b> Vị trí trung bình. Bắt đầu mở rộng đánh các đôi nhỏ và các bài Suit Connectors (87s, 98s) để bẫy đối thủ.<br>👉 <b>Hành động:</b> Raise 2.5x BB. Hạn chế Call hờ, hãy là người nổ súng đầu tiên."
         },
         'co': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','87s','76s','65s','AKo','AQo','AJo','ATo','A9o','KQo','KJo','KTo','QJo','QTo','JTo'],
             call: [],
-            info: "🔥 <b>Chiến lược CO (Cutoff):</b> Đây là lúc in tiền! Tấn công mạnh mẽ để cướp Blinds. Đánh mọi đôi, mọi lá Át đồng chất và Broadways.<br>👉 <b>Hành động:</b> Raise 2.5x BB. Nếu Button là người chơi hiền (Tight), bạn có thể Raise rác hơn nữa."
+            info: "🔥 <b>Chiến lược CO (Cutoff):</b> Đây là lúc in tiền! Tấn công mạnh mẽ để cướp Blinds. Đánh mọi đôi, mọi lá Át đồng chất và Broadways.<br>👉 <b>Hành động:</b> Raise 2.5x BB. Nếu Button hiền, Raise rác hơn nữa."
         },
         'btn': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','QJs','QTs','Q9s','Q8s','Q7s','JTs','J9s','J8s','T9s','T8s','98s','97s','87s','86s','76s','75s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A5o','KQo','KJo','KTo','K9o','QJo','QTo','Q9o','JTo','J9o','T9o','98o'],
             call: [],
             info: "🔥 <b>Chiến lược BTN (Button):</b> Vua của bàn poker. Raise cực rộng (gần 50% hand) để gây áp lực tuyệt đối lên Blind. Luôn có lợi thế đánh sau ở Flop.<br>👉 <b>Hành động:</b> Raise 2.5x BB. Đừng cho Blinds thở."
         },
-        'bb_vs_btn': {
-            raise: ['AA','KK','QQ','JJ','TT','AKs','AQs','AJs','AKo','AQo','A5s','A4s','A3s','A2s','KQs'], 
-            call: ['99','88','77','66','55','44','33','22','ATs','A9s','A8s','A7s','A6s','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','Q4s','Q3s','Q2s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','65s','54s','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo'],
-            info: "🔥 <b>Chiến lược BB Defense:</b> Khi Button cố cướp Blind, hãy mạnh dạn Call nhiều hơn vì được giảm giá (Pot Odds tốt). <br>👉 <b>Hành động:</b> Cầm hàng khủng (AA, KK, AK) hoặc hàng Bluff tốt (A2s-A5s), hãy <b>3-Bet x4 lần</b>. Các bài trung bình thì Call xem Flop."
+        'sb': {
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','QJs','QTs','Q9s','Q8s','JTs','J9s','J8s','T9s','T8s','98s','87s','76s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo'],
+            call: [],
+            info: "🔥 <b>Chiến lược SB (Khi mọi người trước bạn đã Fold):</b> Tuyệt đối không Call (Limp). Hãy <b>Raise 3x BB</b> để ép BB phải bỏ bài. Nếu bị BB 3-bet lại, bạn phải sẵn sàng Fold những bài yếu vì bạn sẽ đánh Out-Of-Position suốt phần còn lại của ván đấu."
+        },
+        'bb': {
+            raise: ['AA','KK','QQ','JJ','TT','AKs','AQs','AJs','AKo','AQo','A5s','A4s'], 
+            call: ['99','88','77','66','55','44','33','22','ATs','A9s','A8s','A7s','A6s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','Q4s','Q3s','Q2s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','75s','65s','64s','54s','53s','43s','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo','T9o'],
+            info: "🔥 <b>Chiến lược BB (Phòng thủ chung khi có người Raise):</b> Bạn có lợi thế về Pot Odds rất tốt. Hãy Call rộng rãi với tất cả các lá đồng chất (Suited) và đôi nhỏ. <br>👉 <b>Hành động:</b> Cầm hàng siêu khủng (AA, KK, QQ, AK) hoặc hàng Bluff (A4s, A5s) hãy <b>3-Bet x3 đến x4 lần</b> để trừng phạt kẻ cướp mù."
         }
     };
 
@@ -275,7 +281,6 @@
     });
 
     document.getElementById('positionSelect').dispatchEvent(new Event('change'));
-
 
     // --- Tab 2 & 3 Logic ---
     function setPot(amount) { document.getElementById('pot').value = amount; }
