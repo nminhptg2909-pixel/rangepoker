@@ -31,9 +31,10 @@
         
         /* State Colors */
         .state-0 { background-color: #444; } /* Empty/Default */
-        .state-1 { background-color: #e74c3c; color: white;} /* Raise/3-Bet */
-        .state-2 { background-color: #2ecc71; color: black; } /* Call */
-        .state-3 { background-color: #7f8c8d; color: white; opacity: 0.4; } /* Fold */
+        .state-1 { background-color: #e74c3c; color: white;} /* Raise/3-Bet (Red) */
+        .state-2 { background-color: #2ecc71; color: black; } /* Call vs Raise (Green) */
+        .state-3 { background-color: #7f8c8d; color: white; opacity: 0.4; } /* Fold (Grey) */
+        .state-4 { background-color: #3498db; color: white; } /* Limp / Over-limp (Blue) */
 
         /* Form Controls */
         .form-group { display: flex; flex-direction: column; gap: 15px; max-width: 450px; margin: auto; }
@@ -56,7 +57,7 @@
         .highlight-red { color: #e74c3c; font-weight: bold;}
         .highlight-yellow { color: #f1c40f; font-weight: bold;}
         
-        .legend { display: flex; gap: 10px; justify-content: center; margin-top: 15px; font-size: 14px; }
+        .legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; font-size: 14px; }
         .legend span { padding: 5px 10px; border-radius: 3px; font-weight: bold; }
         
         .divider { height: 1px; background-color: #555; margin: 20px 0; }
@@ -78,13 +79,13 @@
             <label for="positionSelect">Chọn vị trí (Bàn 8-Max Đầy Đủ):</label>
             <select id="positionSelect">
                 <option value="custom">-- Bảng tự thiết kế của bạn (Custom) --</option>
-                <option value="utg">1. UTG (Đầu bàn - Top 10%)</option>
-                <option value="utg1">2. UTG+1 (Top 12%)</option>
-                <option value="mp">3. MP / LoJack (Giữa bàn - Top 16%)</option>
-                <option value="hj">4. HJ / Hijack (Kề giữa - Top 22%)</option>
-                <option value="co">5. CO / Cutoff (Kề cuối - Top 30%)</option>
-                <option value="btn">6. BTN / Button (Cuối bàn - Top 50%)</option>
-                <option value="sb">7. SB (Small Blind - Cướp mù BB)</option>
+                <option value="utg">1. UTG (Đầu bàn - Không Limp)</option>
+                <option value="utg1">2. UTG+1 (Không Limp)</option>
+                <option value="mp">3. MP / LoJack (Bắt đầu Over-Limp)</option>
+                <option value="hj">4. HJ / Hijack (Over-limp lấy Set/Sảnh)</option>
+                <option value="co">5. CO / Cutoff (Over-Limp rộng hơn)</option>
+                <option value="btn">6. BTN / Button (Over-limp thoải mái)</option>
+                <option value="sb">7. SB (Small Blind - Complete vs Limpers)</option>
                 <option value="bb">8. BB (Big Blind - Defense vs Raise)</option>
             </select>
             <div id="range-info" class="info-box">Tự do click vào các ô bài bên dưới để tạo Range của riêng bạn. Hệ thống sẽ tự lưu lại.</div>
@@ -94,7 +95,8 @@
         
         <div class="legend">
             <span style="background-color: #e74c3c;">Raise / 3-Bet</span>
-            <span style="background-color: #2ecc71; color: black;">Call</span>
+            <span style="background-color: #2ecc71; color: black;">Call (vs Raise)</span>
+            <span style="background-color: #3498db; color: white;">Limp / Over-limp</span>
             <span style="background-color: #7f8c8d; opacity: 0.8;">Fold</span>
         </div>
     </div>
@@ -163,47 +165,53 @@
 </div>
 
 <script>
-    // --- Database: Chuyên gia TAG Ranges (8-Max Đầy Đủ) ---
+    // --- Database: Chuyên gia TAG Ranges (Bổ sung Limp) ---
     const tagRanges = {
         'utg': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','A9s','A5s','KQs','KJs','KTs','QJs','QTs','JTs','T9s','AKo','AQo','AJo','KQo'],
-            call: [],
-            info: "🔥 <b>Chiến lược UTG (Under The Gun):</b> Vị trí hành động đầu tiên. Vô cùng bất lợi nên chỉ chơi những bài thực sự mạnh (khoảng 10%). Raise x3 BB."
+            call: [], limp: [],
+            info: "🔥 <b>Chiến lược UTG:</b> Tuyệt đối không Limp. Raise x3 BB với top 10% bài mạnh nhất."
         },
         'utg1': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A5s','A4s','KQs','KJs','KTs','K9s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','AKo','AQo','AJo','ATo','KQo','KJo'],
-            call: [],
-            info: "🔥 <b>Chiến lược UTG+1:</b> Vẫn rất sớm. Bạn có thể mở rộng thêm một chút bằng cách thêm các đôi trung bình (55, 66) và một vài bài đồng chất đẹp."
+            call: [], limp: [],
+            info: "🔥 <b>Chiến lược UTG+1:</b> Vẫn chưa phải lúc Limp. Đánh chắc tay với Top 12%."
         },
         'mp': {
-            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','QJs','QTs','Q9s','Q8s','JTs','J9s','J8s','T9s','T8s','98s','87s','AKo','AQo','AJo','ATo','A9o','KQo','KJo','KTo','QJo'],
-            call: [],
-            info: "🔥 <b>Chiến lược MP (LoJack):</b> Vị trí giữa bàn. Tăng cường áp lực bằng việc đánh tất cả các đôi (Set mining) và bắt đầu chơi những lá Át đồng chất nhỏ."
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A5s','A4s','KQs','KJs','KTs','K9s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','AKo','AQo','AJo','ATo','KQo','KJo'],
+            call: [], 
+            limp: ['44','33','22','87s','76s','65s','54s'],
+            info: "🔥 <b>Chiến lược MP:</b> <span style='color:#3498db'>Màu xanh dương:</span> Bạn có thể <b>Over-limp</b> (Limp theo) các đôi nhỏ và bài đồng chất nối nhau nếu trước bạn có ít nhất 1-2 người đã Limp."
         },
         'hj': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','QJs','QTs','Q9s','Q8s','JTs','J9s','J8s','T9s','T8s','98s','87s','76s','65s','AKo','AQo','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo'],
-            call: [],
-            info: "🔥 <b>Chiến lược HJ (Hijack):</b> Kề cuối, bắt đầu nhắm vào cướp Blind. Chơi mạnh các bài suited connector (như 65s, 76s) để đa dạng hóa Range, khiến đối thủ khó đoán."
+            call: [], 
+            limp: ['54s','64s','75s','86s'],
+            info: "🔥 <b>Chiến lược HJ:</b> Raise để cướp pot. <span style='color:#3498db'>Over-limp</span> một vài bài semi-connectors nếu bàn đang đánh chậm (Family pots)."
         },
         'co': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A5o','KQo','KJo','KTo','K9o','QJo','QTo','Q9o','JTo','J9o','T9o'],
-            call: [],
-            info: "🔥 <b>Chiến lược CO (Cutoff):</b> Rất mạnh để steal (cướp) nếu BTN là người yếu. Range mở rộng ra khoảng 30% hand. Chơi mọi bài đồng chất có Q hoặc K."
+            call: [], 
+            limp: ['64s','75s','86s','97s','T8s','J8s','Q8s'],
+            info: "🔥 <b>Chiến lược CO:</b> Vị trí đẹp. Raise cướp blind. <span style='color:#3498db'>Over-Limp</span> các bài đồng chất cách 1-2 khe nếu pot đã có nhiều người vào giá rẻ."
         },
         'btn': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','Q4s','Q3s','Q2s','JTs','J9s','J8s','J7s','J6s','J5s','T9s','T8s','T7s','T6s','98s','97s','96s','87s','86s','76s','75s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A6o','A5o','A4o','A3o','A2o','KQo','KJo','KTo','K9o','K8o','QJo','QTo','Q9o','Q8o','JTo','J9o','T9o','98o'],
-            call: [],
-            info: "🔥 <b>Chiến lược BTN (Button):</b> Range Raise 50% hand. Cướp sạch tiền mù. Bạn luôn có lợi thế hành động sau cùng ở các vòng Post-flop."
+            call: [], 
+            limp: [],
+            info: "🔥 <b>Chiến lược BTN:</b> Vua bàn chơi. Ở đây bạn nên dùng quyền lực của BTN để <b>Raise</b> đè đầu những kẻ Limp trước đó thay vì Limp theo họ."
         },
         'sb': {
-            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','QJs','QTs','Q9s','Q8s','Q7s','JTs','J9s','J8s','T9s','T8s','98s','97s','87s','86s','76s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A5o','KQo','KJo','KTo','K9o','QJo','QTo','JTo','T9o'],
-            call: [],
-            info: "🔥 <b>Chiến lược SB (Khi mọi người Fold tới bạn):</b> Tuyệt đối không Call ngang 1/2 BB. Hãy Raise để ép BB bỏ cuộc. Nếu bị BB phản đòn, hãy sẵn sàng vứt rác đi."
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','A9s','KQs','KJs','KTs','QJs','QTs','JTs','AKo','AQo','AJo','ATo','KQo'],
+            call: [], 
+            limp: ['66','55','44','33','22','A8s','A7s','A6s','A5s','A4s','A3s','A2s','K9s','K8s','K7s','K6s','K5s','K4s','Q9s','Q8s','Q7s','J9s','J8s','T9s','T8s','98s','87s','76s','65s','54s','A9o','A8o','A7o','A5o','KJo','KTo','QJo','QTo','JTo','T9o'],
+            info: "🔥 <b>Chiến lược SB:</b> <span style='color:#3498db'>Vùng xanh dương (Complete):</span> Nếu có người Limp trước, bạn chỉ tốn thêm 0.5 BB để xem flop, hãy Limp rất rộng để săn hit bài mạnh."
         },
         'bb': {
             raise: ['AA','KK','QQ','JJ','TT','AKs','AQs','AJs','AKo','AQo','A5s','A4s'], 
             call: ['99','88','77','66','55','44','33','22','ATs','A9s','A8s','A7s','A6s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','Q4s','Q3s','Q2s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','75s','65s','64s','54s','53s','43s','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo','T9o'],
-            info: "🔥 <b>Chiến lược BB Defense (Khi bị Raise):</b> Nhờ Pot Odds cực ngon, bạn được phép Call màu Xanh rộng nhất. Những Hand siêu mạnh hoặc Bluff nhỏ (A4s, A5s) thì hãy 3-Bet mạnh tay (Đỏ)."
+            limp: [],
+            info: "🔥 <b>Chiến lược BB (Defense):</b> Bạn không bao giờ Limp vì bạn đã đóng sẵn 1 BB rồi (chỉ việc Check hoặc Raise nếu mọi người Limp). Màu xanh lá ở đây là để Call khi có người Raise bạn."
         }
     };
 
@@ -242,13 +250,13 @@
             cell.dataset.index = cellIndex;
             cell.textContent = hand;
             
-            // Handle User Clicks
+            // Handle User Clicks (Cycle: 3(Fold)->4(Limp)->1(Raise)->2(Call)->3(Fold))
             cell.addEventListener('click', function() {
                 document.getElementById('positionSelect').value = 'custom';
-                document.getElementById('range-info').innerHTML = "Bảng tự thiết kế của bạn (Custom). Tự động lưu vào trình duyệt.";
+                document.getElementById('range-info').innerHTML = "Bảng tự thiết kế của bạn (Custom). Click để đổi màu: Fold ➡️ Limp ➡️ Raise ➡️ Call";
                 
                 let state = parseInt(this.dataset.state);
-                let newState = state === 3 ? 1 : (state === 1 ? 2 : 3);
+                let newState = state === 3 ? 4 : (state === 4 ? 1 : (state === 1 ? 2 : 3));
                 
                 this.dataset.state = newState;
                 this.className = `cell state-${newState} ${extraClass}`;
@@ -269,9 +277,9 @@
         const cells = document.querySelectorAll('.cell');
         
         if (val === 'custom') {
-            document.getElementById('range-info').innerHTML = "Bảng tự thiết kế của bạn (Custom). Tự động lưu vào trình duyệt.";
+            document.getElementById('range-info').innerHTML = "Bảng tự thiết kế của bạn (Custom). Click để đổi màu: Fold ➡️ Limp ➡️ Raise ➡️ Call";
             cells.forEach((cell, idx) => {
-                let state = customRange[idx];
+                let state = customRange[idx] || 3;
                 cell.dataset.state = state;
                 cell.className = `cell state-${state} ${cell.classList.contains('pair')?'pair':''}`;
             });
@@ -283,9 +291,11 @@
 
         cells.forEach(cell => {
             const hand = cell.dataset.hand;
-            let newState = 3; 
-            if (data.raise.includes(hand)) newState = 1; 
-            else if (data.call.includes(hand)) newState = 2; 
+            let newState = 3; // Fold by default
+            
+            if (data.raise && data.raise.includes(hand)) newState = 1; 
+            else if (data.call && data.call.includes(hand)) newState = 2; 
+            else if (data.limp && data.limp.includes(hand)) newState = 4; // LIMP STATE
             
             cell.dataset.state = newState;
             cell.className = `cell state-${newState} ${cell.classList.contains('pair')?'pair':''}`;
