@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poker Tools: Range, EV & Equity</title>
+    <title>Poker Tools: Range, EV, Pot Odds & Equity</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #1e1e1e; color: #fff; margin: 0; padding: 20px; }
         .container { max-width: 800px; margin: auto; background: #2d2d2d; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
-        h1 { text-align: center; color: #f39c12; }
+        h1 { text-align: center; color: #f39c12; font-size: 24px; }
         
         /* Tabs */
         .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #444; flex-wrap: wrap; }
-        .tab { padding: 10px 20px; cursor: pointer; font-weight: bold; color: #ccc; }
+        .tab { padding: 10px 15px; cursor: pointer; font-weight: bold; color: #ccc; font-size: 15px; }
         .tab:hover { color: #fff; }
         .tab.active { color: #f39c12; border-bottom: 2px solid #f39c12; margin-bottom: -2px; }
         
@@ -31,20 +31,32 @@
         .state-3 { background-color: #7f8c8d; color: white; } /* Fold */
 
         /* Form Controls */
-        .form-group { display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: auto; }
-        label { font-weight: bold; }
-        input, select { padding: 10px; border: none; border-radius: 4px; background-color: #444; color: white; font-size: 16px; }
-        button { padding: 10px; background-color: #f39c12; border: none; border-radius: 4px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;}
-        button:hover { background-color: #e67e22; }
-        .btn-reset { background-color: #c0392b; margin-top: 20px; width: 100%;}
-        .btn-reset:hover { background-color: #e74c3c; }
+        .form-group { display: flex; flex-direction: column; gap: 15px; max-width: 450px; margin: auto; }
+        label { font-weight: bold; color: #ddd; }
+        input, select { padding: 10px; border: 1px solid #555; border-radius: 4px; background-color: #333; color: white; font-size: 16px; }
+        input:focus, select:focus { outline: none; border-color: #f39c12; }
         
-        .result { margin-top: 20px; padding: 15px; border-radius: 4px; text-align: center; font-size: 18px; font-weight: bold; background-color: #444; }
-        .highlight-green { color: #2ecc71; }
-        .highlight-red { color: #e74c3c; }
+        button.btn-main { padding: 12px; background-color: #f39c12; border: none; border-radius: 4px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s;}
+        button.btn-main:hover { background-color: #e67e22; }
+        
+        .btn-reset { background-color: #c0392b; margin-top: 20px; width: 100%; padding: 10px; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer;}
+        .btn-reset:hover { background-color: #e74c3c; }
+
+        /* Quick Outs Buttons */
+        .quick-outs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        .btn-quick { background-color: #444; color: #fff; border: 1px solid #666; padding: 6px 10px; border-radius: 15px; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .btn-quick:hover { background-color: #3498db; border-color: #3498db; }
+        
+        /* Result Box */
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; text-align: center; font-size: 16px; background-color: #333; border: 1px solid #555;}
+        .highlight-green { color: #2ecc71; font-weight: bold;}
+        .highlight-red { color: #e74c3c; font-weight: bold;}
+        .highlight-yellow { color: #f1c40f; font-weight: bold;}
         
         .legend { display: flex; gap: 10px; justify-content: center; margin-top: 15px; font-size: 14px; }
         .legend span { padding: 5px 10px; border-radius: 3px; }
+        
+        .divider { height: 1px; background-color: #555; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -54,12 +66,12 @@
     
     <div class="tabs">
         <div class="tab active" onclick="switchTab('range')">1. Preflop Range</div>
-        <div class="tab" onclick="switchTab('ev')">2. Tính EV</div>
-        <div class="tab" onclick="switchTab('equity')">3. Tính Equity (Outs)</div>
+        <div class="tab" onclick="switchTab('ev')">2. Pot Odds & EV</div>
+        <div class="tab" onclick="switchTab('equity')">3. Equity & Outs</div>
     </div>
 
     <div id="range" class="content active">
-        <p style="text-align: center; font-size: 14px; color: #aaa;">Click vào ô để đổi màu. Bảng sẽ tự động lưu lại nhờ LocalStorage.</p>
+        <p style="text-align: center; font-size: 14px; color: #aaa;">Click vào ô để đổi màu. Tự động lưu bằng LocalStorage.</p>
         <div id="matrix"></div>
         <div class="legend">
             <span style="background-color: #e74c3c;">Raise</span>
@@ -76,33 +88,48 @@
 
             <label for="call">Call Amount (Tiền bạn cần call) $:</label>
             <input type="number" id="call" placeholder="Vd: 50">
+            
+            <button class="btn-main" onclick="calculatePotOdds()">1. Tính Pot Odds (Equity Tối Thiểu Cần Thiết)</button>
+            <div id="pot-odds-result" class="result" style="display: none;"></div>
 
-            <label for="equity-input">Equity của bạn (Tỉ lệ thắng) %:</label>
+            <div class="divider"></div>
+
+            <label for="equity-input">Equity của bạn hiện có (Tra ở Tab 3) %:</label>
             <input type="number" id="equity-input" placeholder="Vd: 45">
 
-            <button onclick="calculateEV()">Tính Toán EV</button>
-
+            <button class="btn-main" onclick="calculateEV()">2. Tính Toán EV Cụ Thể</button>
             <div id="ev-result" class="result">Nhập thông số để xem kết quả</div>
         </div>
     </div>
 
     <div id="equity" class="content">
         <div class="form-group">
-            <p style="font-size: 14px; color: #aaa; text-align: justify;">Sử dụng Quy tắc 2 & 4 để ước tính Equity nhanh ở Flop và Turn dựa trên số lá bài có thể giúp bạn thắng (Outs).</p>
-            
-            <label for="outs">Số lượng Outs của bạn:</label>
-            <input type="number" id="outs" placeholder="Vd: 9 (Sảnh) hoặc 8 (Thùng)...">
+            <p style="font-size: 14px; color: #aaa; margin-bottom: 5px;">Chọn nhanh tình huống bài đợi (Draws):</p>
+            <div class="quick-outs">
+                <button class="btn-quick" onclick="setOuts(3)">Đợi 1 Top Pair (3)</button>
+                <button class="btn-quick" onclick="setOuts(4)">Sảnh lọt khe (4)</button>
+                <button class="btn-quick" onclick="setOuts(4)">2 Đôi lên Cù Lũ (4)</button>
+                <button class="btn-quick" onclick="setOuts(6)">Đợi Top Pair / 2 Overcards (6)</button>
+                <button class="btn-quick" onclick="setOuts(7)">Set lên Cù Lũ/Tứ quý (7)</button>
+                <button class="btn-quick" onclick="setOuts(8)">Sảnh 2 đầu (8)</button>
+                <button class="btn-quick" onclick="setOuts(9)">Đợi Thùng (9)</button>
+                <button class="btn-quick" onclick="setOuts(12)">Thùng + Sảnh khe (12)</button>
+                <button class="btn-quick" onclick="setOuts(15)">Thùng + Sảnh 2 đầu (15)</button>
+            </div>
+
+            <label for="outs" style="margin-top: 10px;">Số lượng Outs của bạn:</label>
+            <input type="number" id="outs" placeholder="Vd: 9 (Thùng)...">
 
             <label for="street">Giai đoạn (Street):</label>
             <select id="street">
-                <option value="flop_to_river">Từ Flop đến River (Xem cả 2 lá Turn & River)</option>
+                <option value="flop_to_river">Từ Flop đến River (Được xem cả 2 lá Turn & River)</option>
                 <option value="flop_to_turn">Từ Flop đến Turn (Chỉ xem 1 lá Turn)</option>
                 <option value="turn_to_river">Từ Turn đến River (Chỉ xem 1 lá River)</option>
             </select>
 
-            <button onclick="calculateEquity()">Tính Ước Lượng Equity</button>
+            <button class="btn-main" onclick="calculateEquity()">Tính Ước Lượng Equity</button>
 
-            <div id="equity-result" class="result">Nhập số Outs để xem kết quả</div>
+            <div id="equity-result" class="result">Chọn Outs và bấm tính toán</div>
         </div>
     </div>
 </div>
@@ -168,7 +195,25 @@
         }
     }
 
-    // --- Tab 2: EV Calculation Logic ---
+    // --- Tab 2: Pot Odds & EV Logic ---
+    function calculatePotOdds() {
+        const pot = parseFloat(document.getElementById('pot').value);
+        const call = parseFloat(document.getElementById('call').value);
+        const resultEl = document.getElementById('pot-odds-result');
+
+        if (isNaN(pot) || isNaN(call) || pot <= 0 || call < 0) {
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = "Vui lòng nhập Pot và Call hợp lệ!";
+            return;
+        }
+
+        // Công thức Pot Odds: Tiền Call / (Tiền Call + Tiền Pot)
+        const requiredEquity = (call / (pot + call)) * 100;
+        
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `Equity tối thiểu cần để Call: <span class="highlight-yellow" style="font-size: 22px;">${requiredEquity.toFixed(1)}%</span><br><span style="font-size: 13px; color:#aaa;">(Nếu Equity của bạn > con số này, hãy Call)</span>`;
+    }
+
     function calculateEV() {
         const pot = parseFloat(document.getElementById('pot').value);
         const call = parseFloat(document.getElementById('call').value);
@@ -177,7 +222,6 @@
 
         if (isNaN(pot) || isNaN(call) || isNaN(equityPercent)) {
             resultEl.innerHTML = "Vui lòng nhập đầy đủ các số hợp lệ!";
-            resultEl.className = "result";
             return;
         }
 
@@ -187,17 +231,19 @@
 
         if (ev > 0) {
             resultEl.innerHTML = `EV = +$${ev.toFixed(2)}<br><span style="font-size: 24px;" class="highlight-green">CALL (Có lãi dài hạn)</span>`;
-            resultEl.className = "result";
         } else if (ev < 0) {
             resultEl.innerHTML = `EV = -$${Math.abs(ev).toFixed(2)}<br><span style="font-size: 24px;" class="highlight-red">FOLD (Lỗ dài hạn)</span>`;
-            resultEl.className = "result";
         } else {
-            resultEl.innerHTML = `EV = $0<br>Hòa vốn (Tùy chọn)`;
-            resultEl.className = "result";
+            resultEl.innerHTML = `EV = $0<br><span class="highlight-yellow">Hòa vốn (Tùy chọn)</span>`;
         }
     }
 
     // --- Tab 3: Equity (Outs) Logic ---
+    function setOuts(num) {
+        document.getElementById('outs').value = num;
+        calculateEquity(); // Tự động tính luôn khi bấm nút
+    }
+
     function calculateEquity() {
         const outs = parseInt(document.getElementById('outs').value);
         const street = document.getElementById('street').value;
@@ -217,7 +263,7 @@
         } else if (street === "flop_to_river") {
             // Quy tắc nhân 4
             equity = outs * 4;
-            // Hiệu chỉnh độ chính xác nếu outs lớn hơn 8 (Công thức: Outs * 4 - (Outs - 8))
+            // Hiệu chỉnh độ chính xác nếu outs lớn hơn 8
             if (outs > 8) {
                 equity = equity - (outs - 8);
                 isAdjusted = true;
@@ -226,8 +272,11 @@
 
         if (equity > 100) equity = 100;
 
-        let extraText = isAdjusted ? "<br><span style='font-size: 12px; color: #aaa;'>(Đã hiệu chỉnh độ chuẩn xác cho Outs > 8)</span>" : "";
-        resultEl.innerHTML = `Ước tính Equity: <span class="highlight-green" style="font-size: 24px;">~${equity}%</span>${extraText}`;
+        let extraText = isAdjusted ? "<br><span style='font-size: 12px; color: #aaa;'>(Đã trừ hao để tính chuẩn xác hơn)</span>" : "";
+        resultEl.innerHTML = `Ước tính Equity: <span class="highlight-green" style="font-size: 26px;">~${equity}%</span>${extraText}`;
+        
+        // Cập nhật luôn sang Tab EV để tiện dụng
+        document.getElementById('equity-input').value = equity;
     }
 </script>
 
