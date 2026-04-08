@@ -75,15 +75,17 @@
 
     <div id="range" class="content active">
         <div class="range-controls">
-            <label for="positionSelect">Chọn vị trí (Bàn 8-Max / Max Profit):</label>
+            <label for="positionSelect">Chọn vị trí (Bàn 8-Max Đầy Đủ):</label>
             <select id="positionSelect">
                 <option value="custom">-- Bảng tự thiết kế của bạn (Custom) --</option>
-                <option value="utg">1. UTG (Đầu bàn - Chơi cực chặt)</option>
-                <option value="mp">2. MP (Giữa bàn - Bắt đầu mở rộng)</option>
-                <option value="co">3. CO (Cutoff - Kề cuối, cướp chip mạnh)</option>
-                <option value="btn">4. BTN (Button - Vua cướp mù)</option>
-                <option value="sb">5. SB (Small Blind - Cướp mù BB hoặc Fold)</option>
-                <option value="bb">6. BB (Big Blind - Phòng thủ chung rộng rãi)</option>
+                <option value="utg">1. UTG (Đầu bàn - Top 10%)</option>
+                <option value="utg1">2. UTG+1 (Top 12%)</option>
+                <option value="mp">3. MP / LoJack (Giữa bàn - Top 16%)</option>
+                <option value="hj">4. HJ / Hijack (Kề giữa - Top 22%)</option>
+                <option value="co">5. CO / Cutoff (Kề cuối - Top 30%)</option>
+                <option value="btn">6. BTN / Button (Cuối bàn - Top 50%)</option>
+                <option value="sb">7. SB (Small Blind - Cướp mù BB)</option>
+                <option value="bb">8. BB (Big Blind - Defense vs Raise)</option>
             </select>
             <div id="range-info" class="info-box">Tự do click vào các ô bài bên dưới để tạo Range của riêng bạn. Hệ thống sẽ tự lưu lại.</div>
         </div>
@@ -161,37 +163,47 @@
 </div>
 
 <script>
-    // --- Database: Chuyên gia TAG Ranges (8-Max Focus, Tối ưu SB/BB) ---
+    // --- Database: Chuyên gia TAG Ranges (8-Max Đầy Đủ) ---
     const tagRanges = {
         'utg': {
             raise: ['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','A9s','A5s','KQs','KJs','KTs','QJs','QTs','JTs','T9s','AKo','AQo','AJo','KQo'],
             call: [],
-            info: "🔥 <b>Chiến lược UTG (Early):</b> Rất dễ bị ép sân sau Flop. Chỉ Open Raise với top 12% bài mạnh nhất. Bỏ hoàn toàn các lá Ax yếu.<br>👉 <b>Hành động:</b> Raise 2.5x - 3x BB. Bị 3-Bet thì Fold nếu không cầm AA, KK, QQ, AK."
+            info: "🔥 <b>Chiến lược UTG (Under The Gun):</b> Vị trí hành động đầu tiên. Vô cùng bất lợi nên chỉ chơi những bài thực sự mạnh (khoảng 10%). Raise x3 BB."
+        },
+        'utg1': {
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A5s','A4s','KQs','KJs','KTs','K9s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','AKo','AQo','AJo','ATo','KQo','KJo'],
+            call: [],
+            info: "🔥 <b>Chiến lược UTG+1:</b> Vẫn rất sớm. Bạn có thể mở rộng thêm một chút bằng cách thêm các đôi trung bình (55, 66) và một vài bài đồng chất đẹp."
         },
         'mp': {
-            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A5s','A4s','KQs','KJs','KTs','K9s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','87s','AKo','AQo','AJo','ATo','KQo','KJo'],
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','QJs','QTs','Q9s','Q8s','JTs','J9s','J8s','T9s','T8s','98s','87s','AKo','AQo','AJo','ATo','A9o','KQo','KJo','KTo','QJo'],
             call: [],
-            info: "🔥 <b>Chiến lược MP (Middle):</b> Vị trí trung bình. Bắt đầu mở rộng đánh các đôi nhỏ và các bài Suit Connectors (87s, 98s) để bẫy đối thủ.<br>👉 <b>Hành động:</b> Raise 2.5x BB. Hạn chế Call hờ, hãy là người nổ súng đầu tiên."
+            info: "🔥 <b>Chiến lược MP (LoJack):</b> Vị trí giữa bàn. Tăng cường áp lực bằng việc đánh tất cả các đôi (Set mining) và bắt đầu chơi những lá Át đồng chất nhỏ."
+        },
+        'hj': {
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','QJs','QTs','Q9s','Q8s','JTs','J9s','J8s','T9s','T8s','98s','87s','76s','65s','AKo','AQo','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo'],
+            call: [],
+            info: "🔥 <b>Chiến lược HJ (Hijack):</b> Kề cuối, bắt đầu nhắm vào cướp Blind. Chơi mạnh các bài suited connector (như 65s, 76s) để đa dạng hóa Range, khiến đối thủ khó đoán."
         },
         'co': {
-            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','87s','76s','65s','AKo','AQo','AJo','ATo','A9o','KQo','KJo','KTo','QJo','QTo','JTo'],
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A5o','KQo','KJo','KTo','K9o','QJo','QTo','Q9o','JTo','J9o','T9o'],
             call: [],
-            info: "🔥 <b>Chiến lược CO (Cutoff):</b> Đây là lúc in tiền! Tấn công mạnh mẽ để cướp Blinds. Đánh mọi đôi, mọi lá Át đồng chất và Broadways.<br>👉 <b>Hành động:</b> Raise 2.5x BB. Nếu Button hiền, Raise rác hơn nữa."
+            info: "🔥 <b>Chiến lược CO (Cutoff):</b> Rất mạnh để steal (cướp) nếu BTN là người yếu. Range mở rộng ra khoảng 30% hand. Chơi mọi bài đồng chất có Q hoặc K."
         },
         'btn': {
-            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','QJs','QTs','Q9s','Q8s','Q7s','JTs','J9s','J8s','T9s','T8s','98s','97s','87s','86s','76s','75s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A5o','KQo','KJo','KTo','K9o','QJo','QTo','Q9o','JTo','J9o','T9o','98o'],
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','Q4s','Q3s','Q2s','JTs','J9s','J8s','J7s','J6s','J5s','T9s','T8s','T7s','T6s','98s','97s','96s','87s','86s','76s','75s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A6o','A5o','A4o','A3o','A2o','KQo','KJo','KTo','K9o','K8o','QJo','QTo','Q9o','Q8o','JTo','J9o','T9o','98o'],
             call: [],
-            info: "🔥 <b>Chiến lược BTN (Button):</b> Vua của bàn poker. Raise cực rộng (gần 50% hand) để gây áp lực tuyệt đối lên Blind. Luôn có lợi thế đánh sau ở Flop.<br>👉 <b>Hành động:</b> Raise 2.5x BB. Đừng cho Blinds thở."
+            info: "🔥 <b>Chiến lược BTN (Button):</b> Range Raise 50% hand. Cướp sạch tiền mù. Bạn luôn có lợi thế hành động sau cùng ở các vòng Post-flop."
         },
         'sb': {
-            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','QJs','QTs','Q9s','Q8s','JTs','J9s','J8s','T9s','T8s','98s','87s','76s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo'],
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','QJs','QTs','Q9s','Q8s','Q7s','JTs','J9s','J8s','T9s','T8s','98s','97s','87s','86s','76s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A5o','KQo','KJo','KTo','K9o','QJo','QTo','JTo','T9o'],
             call: [],
-            info: "🔥 <b>Chiến lược SB (Khi mọi người trước bạn đã Fold):</b> Tuyệt đối không Call (Limp). Hãy <b>Raise 3x BB</b> để ép BB phải bỏ bài. Nếu bị BB 3-bet lại, bạn phải sẵn sàng Fold những bài yếu vì bạn sẽ đánh Out-Of-Position suốt phần còn lại của ván đấu."
+            info: "🔥 <b>Chiến lược SB (Khi mọi người Fold tới bạn):</b> Tuyệt đối không Call ngang 1/2 BB. Hãy Raise để ép BB bỏ cuộc. Nếu bị BB phản đòn, hãy sẵn sàng vứt rác đi."
         },
         'bb': {
             raise: ['AA','KK','QQ','JJ','TT','AKs','AQs','AJs','AKo','AQo','A5s','A4s'], 
             call: ['99','88','77','66','55','44','33','22','ATs','A9s','A8s','A7s','A6s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','Q4s','Q3s','Q2s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','75s','65s','64s','54s','53s','43s','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo','T9o'],
-            info: "🔥 <b>Chiến lược BB (Phòng thủ chung khi có người Raise):</b> Bạn có lợi thế về Pot Odds rất tốt. Hãy Call rộng rãi với tất cả các lá đồng chất (Suited) và đôi nhỏ. <br>👉 <b>Hành động:</b> Cầm hàng siêu khủng (AA, KK, QQ, AK) hoặc hàng Bluff (A4s, A5s) hãy <b>3-Bet x3 đến x4 lần</b> để trừng phạt kẻ cướp mù."
+            info: "🔥 <b>Chiến lược BB Defense (Khi bị Raise):</b> Nhờ Pot Odds cực ngon, bạn được phép Call màu Xanh rộng nhất. Những Hand siêu mạnh hoặc Bluff nhỏ (A4s, A5s) thì hãy 3-Bet mạnh tay (Đỏ)."
         }
     };
 
