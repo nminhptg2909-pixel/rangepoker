@@ -42,10 +42,12 @@
         .btn-reset { background-color: #c0392b; margin-top: 20px; width: 100%; padding: 10px; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer;}
         .btn-reset:hover { background-color: #e74c3c; }
 
-        /* Quick Outs Buttons */
-        .quick-outs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        /* Quick Buttons */
+        .quick-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 5px; }
         .btn-quick { background-color: #444; color: #fff; border: 1px solid #666; padding: 6px 10px; border-radius: 15px; font-size: 13px; cursor: pointer; transition: 0.2s; }
         .btn-quick:hover { background-color: #3498db; border-color: #3498db; }
+        .btn-quick.pot-btn { background-color: #2c3e50; border-color: #34495e; font-weight: bold;}
+        .btn-quick.pot-btn:hover { background-color: #1abc9c; border-color: #1abc9c; }
         
         /* Result Box */
         .result { margin-top: 20px; padding: 15px; border-radius: 4px; text-align: center; font-size: 16px; background-color: #333; border: 1px solid #555;}
@@ -83,8 +85,21 @@
 
     <div id="ev" class="content">
         <div class="form-group">
-            <label for="pot">Pot Size (Tổng Pot hiện tại + Bet của đối thủ) $:</label>
-            <input type="number" id="pot" placeholder="Vd: 100">
+            <p style="font-size: 14px; color: #aaa; margin-bottom: 0;">Chọn nhanh Pot Size:</p>
+            <div class="quick-btns">
+                <button class="btn-quick pot-btn" onclick="setPot(100)">100</button>
+                <button class="btn-quick pot-btn" onclick="setPot(200)">200</button>
+                <button class="btn-quick pot-btn" onclick="setPot(250)">250</button>
+                <button class="btn-quick pot-btn" onclick="setPot(300)">300</button>
+                <button class="btn-quick pot-btn" onclick="setPot(350)">350</button>
+                <button class="btn-quick pot-btn" onclick="setPot(400)">400</button>
+                <button class="btn-quick pot-btn" onclick="setPot(500)">500</button>
+                <button class="btn-quick pot-btn" onclick="setPot(750)">750</button>
+                <button class="btn-quick pot-btn" onclick="setPot(1000)">1000</button>
+            </div>
+            
+            <label for="pot">Hoặc nhập tay Tổng Pot (Pot hiện tại + Bet của đối thủ) $:</label>
+            <input type="number" id="pot" placeholder="Vd: 145">
 
             <label for="call">Call Amount (Tiền bạn cần call) $:</label>
             <input type="number" id="call" placeholder="Vd: 50">
@@ -105,7 +120,7 @@
     <div id="equity" class="content">
         <div class="form-group">
             <p style="font-size: 14px; color: #aaa; margin-bottom: 5px;">Chọn nhanh tình huống bài đợi (Draws):</p>
-            <div class="quick-outs">
+            <div class="quick-btns">
                 <button class="btn-quick" onclick="setOuts(3)">Đợi 1 Top Pair (3)</button>
                 <button class="btn-quick" onclick="setOuts(4)">Sảnh lọt khe (4)</button>
                 <button class="btn-quick" onclick="setOuts(4)">2 Đôi lên Cù Lũ (4)</button>
@@ -196,6 +211,10 @@
     }
 
     // --- Tab 2: Pot Odds & EV Logic ---
+    function setPot(amount) {
+        document.getElementById('pot').value = amount;
+    }
+
     function calculatePotOdds() {
         const pot = parseFloat(document.getElementById('pot').value);
         const call = parseFloat(document.getElementById('call').value);
@@ -207,7 +226,6 @@
             return;
         }
 
-        // Công thức Pot Odds: Tiền Call / (Tiền Call + Tiền Pot)
         const requiredEquity = (call / (pot + call)) * 100;
         
         resultEl.style.display = 'block';
@@ -241,7 +259,7 @@
     // --- Tab 3: Equity (Outs) Logic ---
     function setOuts(num) {
         document.getElementById('outs').value = num;
-        calculateEquity(); // Tự động tính luôn khi bấm nút
+        calculateEquity();
     }
 
     function calculateEquity() {
@@ -258,12 +276,9 @@
         let isAdjusted = false;
 
         if (street === "flop_to_turn" || street === "turn_to_river") {
-            // Quy tắc nhân 2
             equity = outs * 2;
         } else if (street === "flop_to_river") {
-            // Quy tắc nhân 4
             equity = outs * 4;
-            // Hiệu chỉnh độ chính xác nếu outs lớn hơn 8
             if (outs > 8) {
                 equity = equity - (outs - 8);
                 isAdjusted = true;
@@ -275,7 +290,6 @@
         let extraText = isAdjusted ? "<br><span style='font-size: 12px; color: #aaa;'>(Đã trừ hao để tính chuẩn xác hơn)</span>" : "";
         resultEl.innerHTML = `Ước tính Equity: <span class="highlight-green" style="font-size: 26px;">~${equity}%</span>${extraText}`;
         
-        // Cập nhật luôn sang Tab EV để tiện dụng
         document.getElementById('equity-input').value = equity;
     }
 </script>
