@@ -18,29 +18,30 @@
         .content { display: none; }
         .content.active { display: block; }
 
+        /* Range Matrix Controls */
+        .range-controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; background: #333; padding: 15px; border-radius: 5px; border: 1px solid #555;}
+        select { padding: 10px; border: 1px solid #555; border-radius: 4px; background-color: #222; color: white; font-size: 16px; font-weight: bold;}
+        .info-box { font-size: 14px; color: #3498db; line-height: 1.5; }
+
         /* Range Matrix */
-        #matrix { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; margin-top: 20px; }
+        #matrix { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; }
         .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; background-color: #444; cursor: pointer; user-select: none; border-radius: 3px; }
-        .cell:hover { opacity: 0.8; }
-        .pair { border: 1px solid #777; }
+        .cell:hover { opacity: 0.8; box-shadow: inset 0 0 0 2px #fff;}
+        .pair { border: 1px solid #888; }
         
         /* State Colors */
-        .state-0 { background-color: #444; } /* Default */
-        .state-1 { background-color: #e74c3c; color: white;} /* Raise */
+        .state-0 { background-color: #444; } /* Empty/Default */
+        .state-1 { background-color: #e74c3c; color: white;} /* Raise/3-Bet */
         .state-2 { background-color: #2ecc71; color: black; } /* Call */
-        .state-3 { background-color: #7f8c8d; color: white; } /* Fold */
+        .state-3 { background-color: #7f8c8d; color: white; opacity: 0.5; } /* Fold */
 
         /* Form Controls */
         .form-group { display: flex; flex-direction: column; gap: 15px; max-width: 450px; margin: auto; }
         label { font-weight: bold; color: #ddd; }
-        input, select { padding: 10px; border: 1px solid #555; border-radius: 4px; background-color: #333; color: white; font-size: 16px; }
-        input:focus, select:focus { outline: none; border-color: #f39c12; }
+        input { padding: 10px; border: 1px solid #555; border-radius: 4px; background-color: #333; color: white; font-size: 16px; }
         
         button.btn-main { padding: 12px; background-color: #f39c12; border: none; border-radius: 4px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s;}
         button.btn-main:hover { background-color: #e67e22; }
-        
-        .btn-reset { background-color: #c0392b; margin-top: 20px; width: 100%; padding: 10px; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer;}
-        .btn-reset:hover { background-color: #e74c3c; }
 
         /* Quick Buttons */
         .quick-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 5px; }
@@ -56,7 +57,7 @@
         .highlight-yellow { color: #f1c40f; font-weight: bold;}
         
         .legend { display: flex; gap: 10px; justify-content: center; margin-top: 15px; font-size: 14px; }
-        .legend span { padding: 5px 10px; border-radius: 3px; }
+        .legend span { padding: 5px 10px; border-radius: 3px; font-weight: bold; }
         
         .divider { height: 1px; background-color: #555; margin: 20px 0; }
     </style>
@@ -73,14 +74,24 @@
     </div>
 
     <div id="range" class="content active">
-        <p style="text-align: center; font-size: 14px; color: #aaa;">Click vào ô để đổi màu. Tự động lưu bằng LocalStorage.</p>
-        <div id="matrix"></div>
-        <div class="legend">
-            <span style="background-color: #e74c3c;">Raise</span>
-            <span style="background-color: #2ecc71; color: black;">Call</span>
-            <span style="background-color: #7f8c8d;">Fold</span>
+        <div class="range-controls">
+            <label for="positionSelect">Chọn tình huống (Chuẩn TAG Pro):</label>
+            <select id="positionSelect">
+                <option value="custom">-- Bảng tự thiết kế của bạn (Custom) --</option>
+                <option value="utg">1. UTG Open (Vị trí đầu bàn)</option>
+                <option value="btn">2. BTN Open (Vị trí Button - Mở rộng)</option>
+                <option value="bb_vs_btn">3. BB Defense (Phòng thủ BB khi BTN Raise)</option>
+            </select>
+            <div id="range-info" class="info-box">Tự do click vào các ô bài bên dưới để tạo Range của riêng bạn. Hệ thống sẽ tự lưu lại.</div>
         </div>
-        <button class="btn-reset" onclick="resetRange()">Reset Bảng Range</button>
+
+        <div id="matrix"></div>
+        
+        <div class="legend">
+            <span style="background-color: #e74c3c;">Raise / 3-Bet</span>
+            <span style="background-color: #2ecc71; color: black;">Call</span>
+            <span style="background-color: #7f8c8d; opacity: 0.8;">Fold</span>
+        </div>
     </div>
 
     <div id="ev" class="content">
@@ -91,20 +102,17 @@
                 <button class="btn-quick pot-btn" onclick="setPot(200)">200</button>
                 <button class="btn-quick pot-btn" onclick="setPot(250)">250</button>
                 <button class="btn-quick pot-btn" onclick="setPot(300)">300</button>
-                <button class="btn-quick pot-btn" onclick="setPot(350)">350</button>
-                <button class="btn-quick pot-btn" onclick="setPot(400)">400</button>
                 <button class="btn-quick pot-btn" onclick="setPot(500)">500</button>
-                <button class="btn-quick pot-btn" onclick="setPot(750)">750</button>
                 <button class="btn-quick pot-btn" onclick="setPot(1000)">1000</button>
             </div>
             
-            <label for="pot">Hoặc nhập tay Tổng Pot (Pot hiện tại + Bet của đối thủ) $:</label>
+            <label for="pot">Tổng Pot (Pot hiện tại + Bet của đối thủ) $:</label>
             <input type="number" id="pot" placeholder="Vd: 145">
 
             <label for="call">Call Amount (Tiền bạn cần call) $:</label>
             <input type="number" id="call" placeholder="Vd: 50">
             
-            <button class="btn-main" onclick="calculatePotOdds()">1. Tính Pot Odds (Equity Tối Thiểu Cần Thiết)</button>
+            <button class="btn-main" onclick="calculatePotOdds()">1. Tính Pot Odds (Equity Tối Thiểu)</button>
             <div id="pot-odds-result" class="result" style="display: none;"></div>
 
             <div class="divider"></div>
@@ -119,12 +127,12 @@
 
     <div id="equity" class="content">
         <div class="form-group">
-            <p style="font-size: 14px; color: #aaa; margin-bottom: 5px;">Chọn nhanh tình huống bài đợi (Draws):</p>
+            <p style="font-size: 14px; color: #aaa; margin-bottom: 5px;">Chọn nhanh bài đợi (Draws):</p>
             <div class="quick-btns">
-                <button class="btn-quick" onclick="setOuts(3)">Đợi 1 Top Pair (3)</button>
+                <button class="btn-quick" onclick="setOuts(3)">1 Top Pair (3)</button>
                 <button class="btn-quick" onclick="setOuts(4)">Sảnh lọt khe (4)</button>
                 <button class="btn-quick" onclick="setOuts(4)">2 Đôi lên Cù Lũ (4)</button>
-                <button class="btn-quick" onclick="setOuts(6)">Đợi Top Pair / 2 Overcards (6)</button>
+                <button class="btn-quick" onclick="setOuts(6)">Top Pair / 2 Overcards (6)</button>
                 <button class="btn-quick" onclick="setOuts(7)">Set lên Cù Lũ/Tứ quý (7)</button>
                 <button class="btn-quick" onclick="setOuts(8)">Sảnh 2 đầu (8)</button>
                 <button class="btn-quick" onclick="setOuts(9)">Đợi Thùng (9)</button>
@@ -136,10 +144,10 @@
             <input type="number" id="outs" placeholder="Vd: 9 (Thùng)...">
 
             <label for="street">Giai đoạn (Street):</label>
-            <select id="street">
-                <option value="flop_to_river">Từ Flop đến River (Được xem cả 2 lá Turn & River)</option>
-                <option value="flop_to_turn">Từ Flop đến Turn (Chỉ xem 1 lá Turn)</option>
-                <option value="turn_to_river">Từ Turn đến River (Chỉ xem 1 lá River)</option>
+            <select id="street" style="background-color: #333; color: white; padding: 10px; border: 1px solid #555;">
+                <option value="flop_to_river">Từ Flop đến River (Xem 2 lá Turn & River)</option>
+                <option value="flop_to_turn">Từ Flop đến Turn (Chỉ xem 1 lá)</option>
+                <option value="turn_to_river">Từ Turn đến River (Chỉ xem 1 lá)</option>
             </select>
 
             <button class="btn-main" onclick="calculateEquity()">Tính Ước Lượng Equity</button>
@@ -150,6 +158,25 @@
 </div>
 
 <script>
+    // --- Database: Chuyên gia TAG Ranges ---
+    const tagRanges = {
+        'utg': {
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','A9s','KQs','KJs','KTs','QJs','QTs','JTs','T9s','AKo','AQo','AJo'],
+            call: ['66','55','44'],
+            info: "🔥 <b>Chiến lược UTG (Tight):</b> Bạn là người hành động đầu tiên, cần phải chơi cực kỳ chọn lọc vì phía sau còn nhiều người. <br>👉 <b>Sizing:</b> Mở Raise 2.5x hoặc 3x BB. Fold ngay các bài rác."
+        },
+        'btn': {
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A6o','A5o','A4o','A3o','A2o','KQo','KJo','KTo','K9o','QJo','QTo','Q9o','JTo','J9o','T9o'],
+            call: [],
+            info: "🔥 <b>Chiến lược BTN (Aggressive):</b> Vị trí đẹp nhất bàn. Nếu mọi người trước bạn đã Fold, hãy mở rộng Range để tạo áp lực cướp Blind.<br>👉 <b>Sizing:</b> Mở Raise 2.5x BB. Không Call, chỉ Raise hoặc Fold."
+        },
+        'bb_vs_btn': {
+            raise: ['AA','KK','QQ','JJ','TT','AKs','AQs','AJs','AKo','AQo','A5s','A4s','A3s','A2s'], // Value + Bluffs
+            call: ['99','88','77','66','55','44','33','22','ATs','A9s','A8s','A7s','A6s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','Q4s','Q3s','Q2s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','65s','54s','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo'],
+            info: "🔥 <b>Chiến lược BB Defense (Phòng thủ):</b> BTN đang cố cướp Blind của bạn. Vì bạn đã đóng 1 BB và chốt sổ vòng Preflop nên có Pot Odds tốt để Call rộng.<br>👉 <b>Sizing:</b> Nếu cầm bài Premium, hãy <b>3-Bet gấp 4 lần</b> số tiền BTN vừa Raise vì bạn phải đánh Out-of-position sau Flop."
+        }
+    };
+
     // --- Tab Logic ---
     function switchTab(tabId) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
@@ -158,24 +185,12 @@
         event.currentTarget.classList.add('active');
     }
 
-    // --- Tab 1: Range Matrix Logic ---
+    // --- Range Matrix Setup ---
     const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     const matrixEl = document.getElementById('matrix');
-    let savedRange = JSON.parse(localStorage.getItem('pokerRange')) || [];
+    let customRange = JSON.parse(localStorage.getItem('customPokerRange')) || Array(169).fill(3); // Default Fold (3)
 
-    function saveRange() {
-        const cells = document.querySelectorAll('.cell');
-        const stateArray = Array.from(cells).map(c => c.dataset.state);
-        localStorage.setItem('pokerRange', JSON.stringify(stateArray));
-    }
-
-    function resetRange() {
-        if(confirm("Bạn có chắc chắn muốn xóa toàn bộ bảng Range?")) {
-            localStorage.removeItem('pokerRange');
-            location.reload();
-        }
-    }
-
+    // Build DOM Matrix
     let cellIndex = 0;
     for (let i = 0; i < 13; i++) {
         for (let j = 0; j < 13; j++) {
@@ -191,18 +206,28 @@
             }
 
             const cell = document.createElement('div');
-            let currentState = savedRange[cellIndex] ? savedRange[cellIndex] : 0;
-            
-            cell.className = `cell state-${currentState} ${extraClass}`;
-            cell.dataset.state = currentState;
+            cell.className = `cell state-3 ${extraClass}`; // Default visual is Fold
+            cell.dataset.state = 3;
+            cell.dataset.hand = hand;
+            cell.dataset.index = cellIndex;
             cell.textContent = hand;
             
+            // Handle User Clicks (Changes to Custom Mode)
             cell.addEventListener('click', function() {
+                document.getElementById('positionSelect').value = 'custom';
+                document.getElementById('range-info').innerHTML = "Bảng tự thiết kế của bạn (Custom). Tự động lưu vào trình duyệt.";
+                
+                // Cycle states: 3(Fold) -> 1(Raise) -> 2(Call)
                 let state = parseInt(this.dataset.state);
-                let newState = (state + 1) % 4;
+                let newState = state === 3 ? 1 : (state === 1 ? 2 : 3);
+                
                 this.dataset.state = newState;
                 this.className = `cell state-${newState} ${extraClass}`;
-                saveRange();
+                
+                // Save custom
+                const cells = document.querySelectorAll('.cell');
+                customRange = Array.from(cells).map(c => parseInt(c.dataset.state));
+                localStorage.setItem('customPokerRange', JSON.stringify(customRange));
             });
 
             matrixEl.appendChild(cell);
@@ -210,26 +235,52 @@
         }
     }
 
-    // --- Tab 2: Pot Odds & EV Logic ---
-    function setPot(amount) {
-        document.getElementById('pot').value = amount;
-    }
+    // Load Ranges Dropdown Logic
+    document.getElementById('positionSelect').addEventListener('change', function() {
+        const val = this.value;
+        const cells = document.querySelectorAll('.cell');
+        
+        if (val === 'custom') {
+            document.getElementById('range-info').innerHTML = "Bảng tự thiết kế của bạn (Custom). Tự động lưu vào trình duyệt.";
+            cells.forEach((cell, idx) => {
+                let state = customRange[idx];
+                cell.dataset.state = state;
+                cell.className = `cell state-${state} ${cell.classList.contains('pair')?'pair':''}`;
+            });
+            return;
+        }
+
+        const data = tagRanges[val];
+        document.getElementById('range-info').innerHTML = data.info;
+
+        cells.forEach(cell => {
+            const hand = cell.dataset.hand;
+            let newState = 3; // Fold by default
+            if (data.raise.includes(hand)) newState = 1; // Raise/3-Bet
+            else if (data.call.includes(hand)) newState = 2; // Call
+            
+            cell.dataset.state = newState;
+            cell.className = `cell state-${newState} ${cell.classList.contains('pair')?'pair':''}`;
+        });
+    });
+
+    // Initialize initial view (Custom)
+    document.getElementById('positionSelect').dispatchEvent(new Event('change'));
+
+
+    // --- Tab 2 & 3: Pot Odds, EV, Equity (Keep unchanged from previous version) ---
+    function setPot(amount) { document.getElementById('pot').value = amount; }
 
     function calculatePotOdds() {
         const pot = parseFloat(document.getElementById('pot').value);
         const call = parseFloat(document.getElementById('call').value);
         const resultEl = document.getElementById('pot-odds-result');
-
         if (isNaN(pot) || isNaN(call) || pot <= 0 || call < 0) {
-            resultEl.style.display = 'block';
-            resultEl.innerHTML = "Vui lòng nhập Pot và Call hợp lệ!";
-            return;
+            resultEl.style.display = 'block'; resultEl.innerHTML = "Vui lòng nhập Pot và Call hợp lệ!"; return;
         }
-
         const requiredEquity = (call / (pot + call)) * 100;
-        
         resultEl.style.display = 'block';
-        resultEl.innerHTML = `Equity tối thiểu cần để Call: <span class="highlight-yellow" style="font-size: 22px;">${requiredEquity.toFixed(1)}%</span><br><span style="font-size: 13px; color:#aaa;">(Nếu Equity của bạn > con số này, hãy Call)</span>`;
+        resultEl.innerHTML = `Equity tối thiểu cần để Call: <span class="highlight-yellow" style="font-size: 22px;">${requiredEquity.toFixed(1)}%</span><br><span style="font-size: 13px; color:#aaa;">(Nếu Equity > số này = Cứ Call)</span>`;
     }
 
     function calculateEV() {
@@ -237,59 +288,28 @@
         const call = parseFloat(document.getElementById('call').value);
         const equityPercent = parseFloat(document.getElementById('equity-input').value);
         const resultEl = document.getElementById('ev-result');
-
         if (isNaN(pot) || isNaN(call) || isNaN(equityPercent)) {
-            resultEl.innerHTML = "Vui lòng nhập đầy đủ các số hợp lệ!";
-            return;
+            resultEl.innerHTML = "Vui lòng nhập đầy đủ các số hợp lệ!"; return;
         }
-
         const equity = equityPercent / 100;
-        const loseRate = 1 - equity;
-        const ev = (equity * pot) - (loseRate * call);
-
-        if (ev > 0) {
-            resultEl.innerHTML = `EV = +$${ev.toFixed(2)}<br><span style="font-size: 24px;" class="highlight-green">CALL (Có lãi dài hạn)</span>`;
-        } else if (ev < 0) {
-            resultEl.innerHTML = `EV = -$${Math.abs(ev).toFixed(2)}<br><span style="font-size: 24px;" class="highlight-red">FOLD (Lỗ dài hạn)</span>`;
-        } else {
-            resultEl.innerHTML = `EV = $0<br><span class="highlight-yellow">Hòa vốn (Tùy chọn)</span>`;
-        }
+        const ev = (equity * pot) - ((1 - equity) * call);
+        if (ev > 0) resultEl.innerHTML = `EV = +$${ev.toFixed(2)}<br><span style="font-size: 24px;" class="highlight-green">CALL (Có lãi)</span>`;
+        else if (ev < 0) resultEl.innerHTML = `EV = -$${Math.abs(ev).toFixed(2)}<br><span style="font-size: 24px;" class="highlight-red">FOLD (Lỗ)</span>`;
+        else resultEl.innerHTML = `EV = $0<br><span class="highlight-yellow">Hòa vốn</span>`;
     }
 
-    // --- Tab 3: Equity (Outs) Logic ---
-    function setOuts(num) {
-        document.getElementById('outs').value = num;
-        calculateEquity();
-    }
+    function setOuts(num) { document.getElementById('outs').value = num; calculateEquity(); }
 
     function calculateEquity() {
         const outs = parseInt(document.getElementById('outs').value);
         const street = document.getElementById('street').value;
         const resultEl = document.getElementById('equity-result');
-
-        if (isNaN(outs) || outs < 0 || outs > 22) {
-            resultEl.innerHTML = "Vui lòng nhập số Outs hợp lệ (Thường từ 1 đến 21)!";
-            return;
-        }
-
+        if (isNaN(outs) || outs < 0 || outs > 22) { resultEl.innerHTML = "Vui lòng nhập số Outs hợp lệ!"; return; }
         let equity = 0;
-        let isAdjusted = false;
-
-        if (street === "flop_to_turn" || street === "turn_to_river") {
-            equity = outs * 2;
-        } else if (street === "flop_to_river") {
-            equity = outs * 4;
-            if (outs > 8) {
-                equity = equity - (outs - 8);
-                isAdjusted = true;
-            }
-        }
-
+        if (street === "flop_to_turn" || street === "turn_to_river") { equity = outs * 2; }
+        else if (street === "flop_to_river") { equity = outs * 4; if (outs > 8) equity = equity - (outs - 8); }
         if (equity > 100) equity = 100;
-
-        let extraText = isAdjusted ? "<br><span style='font-size: 12px; color: #aaa;'>(Đã trừ hao để tính chuẩn xác hơn)</span>" : "";
-        resultEl.innerHTML = `Ước tính Equity: <span class="highlight-green" style="font-size: 26px;">~${equity}%</span>${extraText}`;
-        
+        resultEl.innerHTML = `Ước tính Equity: <span class="highlight-green" style="font-size: 26px;">~${equity}%</span>`;
         document.getElementById('equity-input').value = equity;
     }
 </script>
