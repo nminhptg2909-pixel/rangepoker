@@ -25,7 +25,7 @@
 
         /* Range Matrix */
         #matrix { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; }
-        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; background-color: #444; cursor: pointer; user-select: none; border-radius: 3px; }
+        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; background-color: #444; cursor: pointer; user-select: none; border-radius: 3px; transition: 0.1s;}
         .cell:hover { opacity: 0.8; box-shadow: inset 0 0 0 2px #fff;}
         .pair { border: 1px solid #888; }
         
@@ -33,7 +33,7 @@
         .state-0 { background-color: #444; } /* Empty/Default */
         .state-1 { background-color: #e74c3c; color: white;} /* Raise/3-Bet */
         .state-2 { background-color: #2ecc71; color: black; } /* Call */
-        .state-3 { background-color: #7f8c8d; color: white; opacity: 0.5; } /* Fold */
+        .state-3 { background-color: #7f8c8d; color: white; opacity: 0.4; } /* Fold */
 
         /* Form Controls */
         .form-group { display: flex; flex-direction: column; gap: 15px; max-width: 450px; margin: auto; }
@@ -75,12 +75,14 @@
 
     <div id="range" class="content active">
         <div class="range-controls">
-            <label for="positionSelect">Chọn tình huống (Chuẩn TAG Pro):</label>
+            <label for="positionSelect">Chọn vị trí (Bàn 8-Max / Max Profit):</label>
             <select id="positionSelect">
                 <option value="custom">-- Bảng tự thiết kế của bạn (Custom) --</option>
-                <option value="utg">1. UTG Open (Vị trí đầu bàn)</option>
-                <option value="btn">2. BTN Open (Vị trí Button - Mở rộng)</option>
-                <option value="bb_vs_btn">3. BB Defense (Phòng thủ BB khi BTN Raise)</option>
+                <option value="utg">1. UTG (Đầu bàn - Chơi cực chặt)</option>
+                <option value="mp">2. MP (Giữa bàn - Bắt đầu mở rộng)</option>
+                <option value="co">3. CO (Cutoff - Kề cuối, cướp chip mạnh)</option>
+                <option value="btn">4. BTN (Button - Cướp mù rộng nhất)</option>
+                <option value="bb_vs_btn">5. BB Defense (Bảo vệ mù vs BTN)</option>
             </select>
             <div id="range-info" class="info-box">Tự do click vào các ô bài bên dưới để tạo Range của riêng bạn. Hệ thống sẽ tự lưu lại.</div>
         </div>
@@ -158,22 +160,32 @@
 </div>
 
 <script>
-    // --- Database: Chuyên gia TAG Ranges ---
+    // --- Database: Chuyên gia TAG Ranges (8-Max Focus) ---
     const tagRanges = {
         'utg': {
-            raise: ['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','A9s','KQs','KJs','KTs','QJs','QTs','JTs','T9s','AKo','AQo','AJo'],
-            call: ['66','55','44'],
-            info: "🔥 <b>Chiến lược UTG (Tight):</b> Bạn là người hành động đầu tiên, cần phải chơi cực kỳ chọn lọc vì phía sau còn nhiều người. <br>👉 <b>Sizing:</b> Mở Raise 2.5x hoặc 3x BB. Fold ngay các bài rác."
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','A9s','A5s','KQs','KJs','KTs','QJs','QTs','JTs','T9s','AKo','AQo','AJo','KQo'],
+            call: [],
+            info: "🔥 <b>Chiến lược UTG (Early):</b> Rất dễ bị ép sân sau Flop. Chỉ Open Raise với top 12% bài mạnh nhất. Bỏ hoàn toàn các lá Ax yếu hoặc bài Suit Connectors nhỏ.<br>👉 <b>Hành động:</b> Raise 2.5x - 3x BB. Bị 3-Bet thì Fold nếu không cầm AA, KK, QQ, AK."
+        },
+        'mp': {
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A5s','A4s','KQs','KJs','KTs','K9s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','87s','AKo','AQo','AJo','ATo','KQo','KJo'],
+            call: [],
+            info: "🔥 <b>Chiến lược MP (Middle):</b> Vị trí trung bình. Bắt đầu mở rộng đánh các đôi nhỏ (55, 66) và các bài Suit Connectors (87s, 98s) để bẫy đối thủ.<br>👉 <b>Hành động:</b> Raise 2.5x BB. Hạn chế Call hờ, hãy là người nổ súng đầu tiên."
+        },
+        'co': {
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','87s','76s','65s','AKo','AQo','AJo','ATo','A9o','KQo','KJo','KTo','QJo','QTo','JTo'],
+            call: [],
+            info: "🔥 <b>Chiến lược CO (Cutoff):</b> Đây là lúc in tiền! Tấn công mạnh mẽ để cướp Blinds. Đánh mọi đôi, mọi lá Át đồng chất và Broadways.<br>👉 <b>Hành động:</b> Raise 2.5x BB. Nếu Button là người chơi hiền (Tight), bạn có thể Raise rác hơn nữa."
         },
         'btn': {
-            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A6o','A5o','A4o','A3o','A2o','KQo','KJo','KTo','K9o','QJo','QTo','Q9o','JTo','J9o','T9o'],
+            raise: ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','QJs','QTs','Q9s','Q8s','Q7s','JTs','J9s','J8s','T9s','T8s','98s','97s','87s','86s','76s','75s','65s','54s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A5o','KQo','KJo','KTo','K9o','QJo','QTo','Q9o','JTo','J9o','T9o','98o'],
             call: [],
-            info: "🔥 <b>Chiến lược BTN (Aggressive):</b> Vị trí đẹp nhất bàn. Nếu mọi người trước bạn đã Fold, hãy mở rộng Range để tạo áp lực cướp Blind.<br>👉 <b>Sizing:</b> Mở Raise 2.5x BB. Không Call, chỉ Raise hoặc Fold."
+            info: "🔥 <b>Chiến lược BTN (Button):</b> Vua của bàn poker. Raise cực rộng (gần 50% hand) để gây áp lực tuyệt đối lên Blind. Luôn có lợi thế đánh sau ở Flop.<br>👉 <b>Hành động:</b> Raise 2.5x BB. Đừng cho Blinds thở."
         },
         'bb_vs_btn': {
-            raise: ['AA','KK','QQ','JJ','TT','AKs','AQs','AJs','AKo','AQo','A5s','A4s','A3s','A2s'], // Value + Bluffs
-            call: ['99','88','77','66','55','44','33','22','ATs','A9s','A8s','A7s','A6s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','Q4s','Q3s','Q2s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','65s','54s','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo'],
-            info: "🔥 <b>Chiến lược BB Defense (Phòng thủ):</b> BTN đang cố cướp Blind của bạn. Vì bạn đã đóng 1 BB và chốt sổ vòng Preflop nên có Pot Odds tốt để Call rộng.<br>👉 <b>Sizing:</b> Nếu cầm bài Premium, hãy <b>3-Bet gấp 4 lần</b> số tiền BTN vừa Raise vì bạn phải đánh Out-of-position sau Flop."
+            raise: ['AA','KK','QQ','JJ','TT','AKs','AQs','AJs','AKo','AQo','A5s','A4s','A3s','A2s','KQs'], 
+            call: ['99','88','77','66','55','44','33','22','ATs','A9s','A8s','A7s','A6s','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','Q4s','Q3s','Q2s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','87s','86s','76s','65s','54s','AJo','ATo','A9o','A8o','KQo','KJo','KTo','QJo','QTo','JTo'],
+            info: "🔥 <b>Chiến lược BB Defense:</b> Khi Button cố cướp Blind, hãy mạnh dạn Call nhiều hơn vì được giảm giá (Pot Odds tốt). <br>👉 <b>Hành động:</b> Cầm hàng khủng (AA, KK, AK) hoặc hàng Bluff tốt (A2s-A5s), hãy <b>3-Bet x4 lần</b>. Các bài trung bình thì Call xem Flop."
         }
     };
 
@@ -188,7 +200,7 @@
     // --- Range Matrix Setup ---
     const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     const matrixEl = document.getElementById('matrix');
-    let customRange = JSON.parse(localStorage.getItem('customPokerRange')) || Array(169).fill(3); // Default Fold (3)
+    let customRange = JSON.parse(localStorage.getItem('customPokerRange')) || Array(169).fill(3); 
 
     // Build DOM Matrix
     let cellIndex = 0;
@@ -206,25 +218,23 @@
             }
 
             const cell = document.createElement('div');
-            cell.className = `cell state-3 ${extraClass}`; // Default visual is Fold
+            cell.className = `cell state-3 ${extraClass}`; 
             cell.dataset.state = 3;
             cell.dataset.hand = hand;
             cell.dataset.index = cellIndex;
             cell.textContent = hand;
             
-            // Handle User Clicks (Changes to Custom Mode)
+            // Handle User Clicks
             cell.addEventListener('click', function() {
                 document.getElementById('positionSelect').value = 'custom';
                 document.getElementById('range-info').innerHTML = "Bảng tự thiết kế của bạn (Custom). Tự động lưu vào trình duyệt.";
                 
-                // Cycle states: 3(Fold) -> 1(Raise) -> 2(Call)
                 let state = parseInt(this.dataset.state);
                 let newState = state === 3 ? 1 : (state === 1 ? 2 : 3);
                 
                 this.dataset.state = newState;
                 this.className = `cell state-${newState} ${extraClass}`;
                 
-                // Save custom
                 const cells = document.querySelectorAll('.cell');
                 customRange = Array.from(cells).map(c => parseInt(c.dataset.state));
                 localStorage.setItem('customPokerRange', JSON.stringify(customRange));
@@ -255,20 +265,19 @@
 
         cells.forEach(cell => {
             const hand = cell.dataset.hand;
-            let newState = 3; // Fold by default
-            if (data.raise.includes(hand)) newState = 1; // Raise/3-Bet
-            else if (data.call.includes(hand)) newState = 2; // Call
+            let newState = 3; 
+            if (data.raise.includes(hand)) newState = 1; 
+            else if (data.call.includes(hand)) newState = 2; 
             
             cell.dataset.state = newState;
             cell.className = `cell state-${newState} ${cell.classList.contains('pair')?'pair':''}`;
         });
     });
 
-    // Initialize initial view (Custom)
     document.getElementById('positionSelect').dispatchEvent(new Event('change'));
 
 
-    // --- Tab 2 & 3: Pot Odds, EV, Equity (Keep unchanged from previous version) ---
+    // --- Tab 2 & 3 Logic ---
     function setPot(amount) { document.getElementById('pot').value = amount; }
 
     function calculatePotOdds() {
@@ -293,8 +302,8 @@
         }
         const equity = equityPercent / 100;
         const ev = (equity * pot) - ((1 - equity) * call);
-        if (ev > 0) resultEl.innerHTML = `EV = +$${ev.toFixed(2)}<br><span style="font-size: 24px;" class="highlight-green">CALL (Có lãi)</span>`;
-        else if (ev < 0) resultEl.innerHTML = `EV = -$${Math.abs(ev).toFixed(2)}<br><span style="font-size: 24px;" class="highlight-red">FOLD (Lỗ)</span>`;
+        if (ev > 0) resultEl.innerHTML = `EV = +$${ev.toFixed(2)}<br><span style="font-size: 24px;" class="highlight-green">CALL (Có lãi dài hạn)</span>`;
+        else if (ev < 0) resultEl.innerHTML = `EV = -$${Math.abs(ev).toFixed(2)}<br><span style="font-size: 24px;" class="highlight-red">FOLD (Lỗ dài hạn)</span>`;
         else resultEl.innerHTML = `EV = $0<br><span class="highlight-yellow">Hòa vốn</span>`;
     }
 
